@@ -1,0 +1,12 @@
+{{ define "menu" }}
+<div class="menu border1">
+    <div class="menuitems">
+        <button class="menu-item" hx-get="/pages/body" hx-target="#main">Home</button>
+        <button class="menu-item" hx-get="/pages/form" hx-target="#main">Form</button>
+        <button class="menu-item" hx-get="/pages/systeminfo" hx-target="#main">System info</button>
+        <button class="menu-item">Table</button>
+        <span class="menu-gap"></span>
+        <span class="menu-item" hx-get="/api/username" hx-swap="innerHTML" hx-trigger="userConnected from:body">User name</span>
+    </div>
+</div>
+{{ end }}
