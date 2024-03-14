@@ -140,9 +140,7 @@
 
 .form-group {
     display: block;
-    flex-direction: row;
-    justify-content: flex-start;
-    vertical-align: middle;
+    margin: 5px;   
 }
 
 .error {
