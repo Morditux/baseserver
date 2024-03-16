@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -16,14 +17,46 @@ type Sessions struct {
 
 // Session represents a session with associated data.
 type Session struct {
-	Data map[string]interface{}
+	Data        map[string]interface{}
+	Expriration int64
 }
 
 // NewSessions creates a new Sessions instance.
 func NewSessions() *Sessions {
-	return &Sessions{
+	sessions := &Sessions{
 		s:     make(map[string]Session),
 		mutex: &sync.Mutex{},
+	}
+	ticker := time.NewTicker(1 * time.Hour)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				slog.Info("Cleaning up expired sessions")
+				sessions.cleanUp()
+			}
+		}
+
+	}()
+	return sessions
+}
+
+func (s *Sessions) cleanUp() {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	now := time.Now().Unix()
+	for id, session := range s.s {
+		if session.Expriration > now {
+			delete(s.s, id)
+		}
+	}
+}
+
+func createSession() Session {
+	expiration := time.Now().Add(1 * time.Hour).Unix()
+	return Session{
+		Data:        make(map[string]interface{}),
+		Expriration: expiration,
 	}
 }
 
@@ -41,16 +74,12 @@ func (s *Sessions) GetSession(w http.ResponseWriter, r *http.Request) Session {
 		if ok {
 			return session
 		}
-		session = Session{
-			Data: make(map[string]interface{}),
-		}
+		session = createSession()
 		s.s[cookie.Value] = session
 		return session
 	}
 
-	session := Session{
-		Data: make(map[string]interface{}),
-	}
+	session := createSession()
 	id := SetCookie(w, "htmxsession")
 	s.s[id] = session
 	return session
